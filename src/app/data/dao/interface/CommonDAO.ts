@@ -1,16 +1,15 @@
-import {Observable} from "rxjs";
+import {Observable} from 'rxjs';
 
 export interface CommonDAO<T> {
 
-    getAll(): Observable<T[]>;
+    findAll(): Observable<T[]>;
 
-    get(id: number): Observable<T>;
+    findById(id: number): Observable<T>;
 
-    add(T): Observable<T>;
-
-    update(T): Observable<T>;
+    update(obj: T): Observable<T>;
 
     delete(id: number): Observable<T>;
 
+    add(obj: T): Observable<T>;
 
 }

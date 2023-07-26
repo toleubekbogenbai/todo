@@ -1,40 +1,43 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {ConfirmDialogComponent} from '../confirm-dialog/confirm-dialog.component';
+import {Priority} from '../../model/Priority';
 import {DialogAction, DialogResult} from '../../object/DialogResult';
-import {Category} from '../../model/Category';
 import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
 
+
 @Component({
-    selector: 'app-edit-category-dialog',
-    templateUrl: './edit-category-dialog.component.html',
-    styleUrls: ['./edit-category-dialog.component.css']
+    selector: 'app-edit-priority-dialog',
+    templateUrl: './edit-priority-dialog.component.html',
+    styleUrls: ['./edit-priority-dialog.component.css']
 })
 
-export class EditCategoryDialogComponent implements OnInit {
+export class EditPriorityDialogComponent implements OnInit {
+
 
     constructor(
-        private dialogRef: MatDialogRef<EditCategoryDialogComponent>,
-        @Inject(MAT_DIALOG_DATA) private data: [Category, string],
+        private dialogRef: MatDialogRef<EditPriorityDialogComponent>,
+        @Inject(MAT_DIALOG_DATA) private data: [Priority, string],
         private dialog: MatDialog
     ) {
     }
 
     dialogTitle: string;
-    category: Category;
-    canDelete = true;
+    priority: Priority;
+    canDelete = false;
 
     ngOnInit() {
-
-        this.category = this.data[0];
+        this.priority = this.data[0];
         this.dialogTitle = this.data[1];
 
-        if (this.category && this.category.id && this.category.id > 0) {
+        if (this.priority && this.priority.id > 0) {
             this.canDelete = true;
         }
+
+
     }
 
     confirm(): void {
-        this.dialogRef.close(new DialogResult(DialogAction.SAVE, this.category));
+        this.dialogRef.close(new DialogResult(DialogAction.SAVE, this.priority));
     }
 
     cancel(): void {
@@ -47,7 +50,7 @@ export class EditCategoryDialogComponent implements OnInit {
             maxWidth: '500px',
             data: {
                 dialogTitle: 'Подтвердите действие',
-                message: `Вы действительно хотите удалить категорию: "${this.category.title}"? (сами задачи не удаляются)`
+                message: `Вы действительно хотите удалить приоритет: "${this.priority.title}"? (задачам проставится значение 'Без приоритета')`
             },
             autoFocus: false
         });

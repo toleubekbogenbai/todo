@@ -1,0 +1,30 @@
+<div class="container-fluid settings">
+
+
+    <!--  кнопка открытия-закрытия меню-->
+    <div class="col-8 text-left align-self-top">
+
+        <button mat-icon-button type="button" (click)="onToggleMenu()">
+
+            <mat-icon>menu</mat-icon>
+
+        </button>
+
+        <p class="navbar-brand"><span *ngIf="!isMobile">Категория:</span> "{{categoryName}}"</p>
+
+    </div>
+
+
+    <div class="col-4 text-right align-self-top">
+
+        <button mat-icon-button (click)="showSettings()" class="header-icon">
+            <mat-icon>settings</mat-icon>
+        </button>
+
+
+
+    </div>
+</div>
+
+
+

@@ -1,59 +1,113 @@
-<div class="wrapper ">
+<ng-sidebar-container style=" height: 100vh">
 
-    <app-categories (selectCategory)="onSelectCategory($event)"
-                    (updateCategory)="onUpdateCategory($event)"
-                    (deleteCategory)="onDeleteCategory($event)"
+    <ng-sidebar
+            (onClosed)="onClosedMenu()"
+            [animate]="true"
+            [autoFocus]="false"
+            [closeOnClickBackdrop]="true"
+            [closeOnClickOutside]="false"
+            [mode]="menuMode"
+            [opened]="menuOpened"
+            [position]="menuPosition"
+            [showBackdrop]="showBackdrop"
 
+
+    >
+        <div class="sidebar"
+             data-color="purple"
+             data-intro="Фильтрация задач, добавление/удаление/редактирование категорий"
+             data-position='right'
+             data-step="1"
+        >
+
+            <app-categories
+                    (addCategory)="addCategory($event)"
+                    (deleteCategory)="deleteCategory($event)"
+                    (searchCategory)="searchCategory($event)"
+                    (selectCategory)="selectCategory($event)"
+                    (updateCategory)="updateCategory($event)"
+
+
+                    [categories]="categories"
                     [selectedCategory]="selectedCategory"
-                    [categories]="categories"></app-categories>
+                    [uncompletedCountForCategoryAll]="uncompletedCountForCategoryAll"
+                    [categorySearchValues]="categorySearchValues"
+
+            ></app-categories>
+
+        </div>
+
+    </ng-sidebar>
 
 
-    <div class="main-panel">
-        <!-- Navbar -->
-        <nav class="navbar navbar-expand-lg navbar-transparent navbar-absolute fixed-top ">
-            <div class="container-fluid">
-                <div class="navbar-wrapper">
-                    <a class="navbar-brand" href="#pablo">ЗАДАЧНИК</a>
-                </div>
-                <button aria-controls="navigation-index" aria-expanded="false" aria-label="Toggle navigation"
-                        class="navbar-toggler" data-toggle="collapse" type="button">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="navbar-toggler-icon icon-bar"></span>
-                    <span class="navbar-toggler-icon icon-bar"></span>
-                    <span class="navbar-toggler-icon icon-bar"></span>
-                </button>
-                <div class="collapse navbar-collapse justify-content-end">
-                    <form class="navbar-form">
-                        <div class="input-group no-border">
-                            <input class="form-control" placeholder="Поиск..." type="text" value="">
-                            <button class="btn btn-white btn-round btn-just-icon" type="submit">
-                                <i class="material-icons">search</i>
-                                <div class="ripple-container"></div>
-                            </button>
+    <div ng-sidebar-content>
+
+
+        <div class="main-panel">
+
+            <nav class="navbar navbar-expand-lg navbar-transparent navbar-absolute fixed-top ">
+
+                                <app-header
+
+                                        [categoryName]="selectedCategory ? selectedCategory.title: 'Все'"
+
+                                        (toggleMenu)="toggleMenu()"
+                                        (settingsChanged)="settingsChanged($event)"
+
+
+                                ></app-header>
+
+
+            </nav>
+
+            <div class="content">
+                <div class="container-fluid">
+
+                    <div data-intro="Список всех задач"
+                         data-position='top'
+                         data-step="2">
+
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-12">
+
+                            <app-tasks
+
+                                    [showSearch]="showSearch"
+                                    [totalTasksFounded]="totalTasksFounded"
+                                    [tasks]="tasks"
+                                    [priorities]="priorities"
+                                    [categories]="categories"
+                                    [selectedCategory]="selectedCategory"
+                                    [taskSearchValues]="taskSearchValues"
+
+
+                                    (searchAction)="searchTasks($event)"
+                                    (selectCategory)="selectCategory($event)"
+                                    (addTask)="addTask($event)"
+                                    (deleteTask)="deleteTask($event)"
+                                    (updateTask)="updateTask($event)"
+                                    (paging)="paging($event)"
+                                    (toggleSearch)="toggleSearch($event)"
+
+
+                            ></app-tasks>
+
+
                         </div>
-                    </form>
-
-                </div>
-            </div>
-        </nav>
-
-        <div class="content">
-            <div class="container-fluid">
-
-                <div class="row">
-                    <div class="col-12">
-                        <app-tasks (updateTask)="onUpdateTask($event)"
-                                   (deleteTask)="onDeleteTask($event)"
-                                   (selectCategory)="onSelectCategory($event)"
-                                   [tasks]="tasks">
-
-                        </app-tasks>
                     </div>
                 </div>
             </div>
-        </div>
-        <footer class="footer">
 
-        </footer>
+
+            <app-footer *ngIf="!isMobile"></app-footer>
+
+
+        </div>
+
     </div>
-</div>
+
+
+</ng-sidebar-container>

@@ -1,79 +1,260 @@
 import {Component, OnInit} from '@angular/core';
-import {DataHandlerService} from "./service/data-handler.service";
-import {Task} from './model/Task';
+import {DeviceDetectorService} from 'ngx-device-detector';
+import {MatDialog} from '@angular/material/dialog';
+import {PageEvent} from '@angular/material/paginator';
+import {Task} from 'src/app/model/Task';
 import {Category} from "./model/Category";
+import {CategorySearchValues, TaskSearchValues} from "./data/dao/search/SearchObjects";
+import {TaskService} from "./data/dao/impl/TaskService";
+import {CategoryService} from "./data/dao/impl/CategoryService";
+import {Observable} from "rxjs";
 import {Priority} from "./model/Priority";
+import {PriorityService} from "./data/dao/impl/PriorityService";
+
 
 @Component({
     selector: 'app-root',
-    templateUrl: 'app.component.html',
-    styles: []
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.css']
 })
+
 export class AppComponent implements OnInit {
-    title = 'Todo';
+
+    selectedCategory: Category = null;
+
+    isMobile: boolean;
+    isTablet: boolean;
+
+
+    showSearch: boolean;
+
+
     tasks: Task[];
     categories: Category[];
+    priorities: Priority[];
 
-    private selectedCategory: Category = null;
+
+    menuOpened: boolean;
+    menuMode: string;
+    menuPosition: string;
+    showBackdrop: boolean;
+
+    readonly defaultPageSize = 5;
+    readonly defaultPageNumber = 0;
+
+    uncompletedCountForCategoryAll: number;
 
 
-    constructor(private dataHundler: DataHandlerService) {
+    totalTasksFounded: number;
+
+    taskSearchValues = new TaskSearchValues();
+    categorySearchValues = new CategorySearchValues();
+
+
+    constructor(
+        private taskService: TaskService,
+        private categoryService: CategoryService,
+        private priorityService: PriorityService,
+        private dialog: MatDialog,
+        private deviceService: DeviceDetectorService
+    ) {
+
+
+        this.isMobile = deviceService.isMobile();
+        this.isTablet = deviceService.isTablet();
+
+
+        this.setMenuDisplayParams();
+
     }
+
 
     ngOnInit(): void {
-        this.dataHundler.getAllCategories().subscribe(categories => this.categories = categories);
+
+        if (!this.isMobile && !this.isTablet) {
+            // this.introService.startIntroJS(true); // при первом запуске приложения - показать интро
+        }
+
+        this.fillAllCategories().subscribe(res => {
+            this.categories = res;
+
+            this.selectCategory(this.selectedCategory);
 
 
-        this.onSelectCategory(null);
+        });
+
+        this.fillAllPriorities();
+
 
     }
 
-    private onSelectCategory(category: Category) {
+    fillAllPriorities() {
+        this.priorityService.findAll().subscribe(result => {
+            this.priorities = result;
+        });
+    }
+
+    fillAllCategories(): Observable<Category[]> {
+        return this.categoryService.findAll();
+    }
+
+
+    selectCategory(category: Category) {
+
+        this.taskSearchValues.pageNumber = 0;
+
         this.selectedCategory = category;
 
-        this.dataHundler.searchTasks(
-            this.selectedCategory,
-            null,
-            null,
-            null,
-        ).subscribe(tasks => this.tasks = tasks);
+        this.taskSearchValues.categoryId = category ? category.id : null;
+
+        this.searchTasks(this.taskSearchValues);
+
+        if (this.isMobile) {
+            this.menuOpened = false;
+        }
     }
 
-    private onUpdateTask(task: Task) {
-        this.dataHundler.updateTask(task).subscribe(() => {
-
-            this.dataHundler.searchTasks(
-                this.selectedCategory,
-                null,
-                null,
-                null,
-            ).subscribe(tasks => this.tasks = tasks);
-        })
+    addCategory(category: Category) {
+        this.categoryService.add(category).subscribe(result => {
+                this.searchCategory(this.categorySearchValues);
+            }
+        );
     }
 
-    private onDeleteTask(task: Task) {
-        this.dataHundler.deleteTask(task.id).subscribe(() => {
-            this.dataHundler.searchTasks(
-                this.selectedCategory,
-                null,
-                null,
-                null,
-            ).subscribe(tasks => this.tasks = tasks);
-        })
-    }
 
-    private onUpdateCategory(category: Category){
-        this.dataHundler.updateCategory(category).subscribe( () => {
-           this.onSelectCategory(this.selectedCategory)
-        });
-    }
-
-    private onDeleteCategory(category: Category){
-        this.dataHundler.deleteCategory(category.id).subscribe( cat => {
+    deleteCategory(category: Category) {
+        this.categoryService.delete(category.id).subscribe(cat => {
             this.selectedCategory = null;
-            this.onSelectCategory(this.selectedCategory);
+
+            this.searchCategory(this.categorySearchValues);
+            this.selectCategory(this.selectedCategory);
+
         });
     }
+
+    updateCategory(category: Category) {
+        this.categoryService.update(category).subscribe(() => {
+
+            this.searchCategory(this.categorySearchValues);
+            this.searchTasks(this.taskSearchValues);
+
+        });
+    }
+
+
+    searchCategory(categorySearchValues: CategorySearchValues) {
+
+        this.categoryService.findCategories(categorySearchValues).subscribe(result => {
+            this.categories = result;
+        });
+
+    }
+
+
+    // поиск задач
+    searchTasks(searchTaskValues: TaskSearchValues) {
+        this.taskSearchValues = searchTaskValues;
+
+        this.taskService.findTasks(this.taskSearchValues).subscribe(result => {
+
+            if (result.totalPages > 0 && this.taskSearchValues.pageNumber >= result.totalPages) {
+                this.taskSearchValues.pageNumber = 0;
+                this.searchTasks(this.taskSearchValues);
+            }
+
+            this.totalTasksFounded = result.totalElements;
+            this.tasks = result.content;
+        });
+
+    }
+
+
+    // добавление задачи
+    addTask(task: Task) {
+
+        this.taskService.add(task).subscribe(result => {
+
+            this.searchTasks(this.taskSearchValues);
+
+        });
+
+
+    }
+
+
+    deleteTask(task: Task) {
+
+        this.taskService.delete(task.id).subscribe(result => {
+
+            this.searchTasks(this.taskSearchValues);
+
+        });
+
+
+    }
+
+
+    updateTask(task: Task) {
+
+        this.taskService.update(task).subscribe(result => {
+
+            this.searchTasks(this.taskSearchValues);
+
+        });
+
+
+    }
+
+    toggleMenu() {
+        this.menuOpened = !this.menuOpened;
+    }
+
+    onClosedMenu() {
+        this.menuOpened = false;
+    }
+
+    setMenuDisplayParams() {
+        this.menuPosition = 'left';
+
+        if (this.isMobile) {
+            this.menuOpened = false;
+            this.menuMode = 'over';
+            this.showBackdrop = true;
+        } else {
+            this.menuOpened = true;
+            this.menuMode = 'push';
+            this.showBackdrop = false;
+        }
+
+    }
+
+    paging(pageEvent: PageEvent) {
+
+        if (this.taskSearchValues.pageSize !== pageEvent.pageSize) {
+            this.taskSearchValues.pageNumber = 0;
+        } else {
+            this.taskSearchValues.pageNumber = pageEvent.pageIndex;
+        }
+
+        this.taskSearchValues.pageSize = pageEvent.pageSize;
+        this.taskSearchValues.pageNumber = pageEvent.pageIndex;
+
+        this.searchTasks(this.taskSearchValues);
+    }
+
+
+    toggleSearch(showSearch: boolean) {
+        this.showSearch = showSearch;
+
+    }
+    settingsChanged(priorities: Priority[]){
+        // this.fillAllPriorities();
+        this.priorities = priorities;
+        this.searchTasks(this.taskSearchValues);
+    }
+
 
 
 }
+
+
